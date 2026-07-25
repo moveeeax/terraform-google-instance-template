@@ -24,6 +24,11 @@ jobs:
       - name: validate
         run: tofu validate
 
+      # Runs against a mocked google provider, so no cloud credentials are
+      # needed. Requires OpenTofu/Terraform >= 1.7 for `mock_provider`.
+      - name: test
+        run: tofu test
+
       - name: validate example
         working-directory: examples/basic
         run: |
