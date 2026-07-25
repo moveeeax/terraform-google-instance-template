@@ -4,8 +4,21 @@ variable "project_id" {
 }
 
 variable "name_prefix" {
-  description = "Prefix for the generated instance template name."
+  description = "Prefix for the generated instance template name. Must be a valid start of a Compute Engine resource name and at most 37 characters, because the API appends a uniqueness suffix and truncates longer prefixes."
   type        = string
+
+  validation {
+    condition     = can(regex("^[a-z][-a-z0-9]*$", var.name_prefix))
+    error_message = "name_prefix must start with a lowercase letter and contain only lowercase letters, digits and hyphens."
+  }
+
+  validation {
+    # Compute Engine caps the generated name at 54 characters and silently
+    # truncates prefixes longer than 37, which destroys the uniqueness the
+    # suffix is meant to provide.
+    condition     = length(var.name_prefix) <= 37
+    error_message = "name_prefix must be 37 characters or fewer; longer prefixes are truncated by the API."
+  }
 }
 
 variable "machine_type" {
@@ -64,4 +77,26 @@ variable "labels" {
   description = "Labels applied to the instance template."
   type        = map(string)
   default     = {}
+}
+
+variable "enable_oslogin" {
+  description = "Manage SSH access with OS Login (IAM) rather than metadata SSH keys. Set to false only if you rely on project or instance metadata SSH keys."
+  type        = bool
+  default     = true
+}
+
+variable "enable_serial_port" {
+  description = "Allow interactive serial console access to instances created from the template. The serial console bypasses the guest firewall and OS Login, so it is disabled by default."
+  type        = bool
+  default     = false
+}
+
+variable "shielded_instance_config" {
+  description = "Shielded VM settings for instances created from the template. Secure Boot is off unless enabled here. Set to null to omit the block entirely, which is required for boot images without UEFI support."
+  type = object({
+    enable_secure_boot          = optional(bool, true)
+    enable_vtpm                 = optional(bool, true)
+    enable_integrity_monitoring = optional(bool, true)
+  })
+  default = {}
 }
