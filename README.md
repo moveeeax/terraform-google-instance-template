@@ -9,7 +9,7 @@ instance groups.
 
 ```hcl
 module "instance_template" {
-  source = "github.com/moveeeax/terraform-google-instance-template"
+  source = "github.com/moveeeax/terraform-google-instance-template?ref=v1.0.0"
 
   project_id   = var.project_id
   name_prefix  = "web-"
