@@ -6,6 +6,8 @@ All notable changes to this module are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-07
+
 ### Added
 
 - `service_account` input (`email`, `scopes` defaulting to `["cloud-platform"]`)
@@ -26,5 +28,6 @@ All notable changes to this module are documented here. The format follows
 
 Initial release (`v0.1.0` points at the same commit).
 
-[Unreleased]: https://github.com/moveeeax/terraform-google-instance-template/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/moveeeax/terraform-google-instance-template/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/moveeeax/terraform-google-instance-template/compare/v1.1.0...v1.2.0
 [1.0.0]: https://github.com/moveeeax/terraform-google-instance-template/releases/tag/v1.0.0
