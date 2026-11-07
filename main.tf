@@ -38,6 +38,19 @@ resource "google_compute_instance_template" "this" {
     subnetwork = var.subnetwork
   }
 
+  # Null (the default) emits no block, so instances run with no service account
+  # and no Google API credentials. The email is required on the input: an empty
+  # block would make the API fall back to the Compute Engine default service
+  # account, which usually holds Editor on the project.
+  dynamic "service_account" {
+    for_each = var.service_account == null ? [] : [var.service_account]
+
+    content {
+      email  = service_account.value.email
+      scopes = service_account.value.scopes
+    }
+  }
+
   # Secure Boot is OFF unless this block sets it, even on Shielded-VM-capable
   # images. Set var.shielded_instance_config to null for images without UEFI
   # support, where the API rejects the block outright.

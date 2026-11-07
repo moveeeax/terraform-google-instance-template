@@ -16,6 +16,11 @@ module "instance_template" {
   region       = "us-central1"
   machine_type = "e2-medium"
   image        = "debian-cloud/debian-12"
+
+  # A dedicated, least-privilege service account. Omit to attach none.
+  service_account = {
+    email = google_service_account.web.email
+  }
 }
 ```
 
@@ -28,7 +33,7 @@ The module is opinionated about the settings that are unsafe when left unset:
 | Behaviour                     | Default                       | Why                                                                                                                                    |
 |-------------------------------|-------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | External IP                   | none                          | No `access_config` block is emitted. An empty `access_config {}` attaches an ephemeral public IP to every instance in the group.        |
-| Service account               | none attached                 | Set one explicitly on the consuming resource rather than inheriting the Compute Engine default SA with the `cloud-platform` scope.      |
+| Service account               | none attached                 | Set `service_account` to a dedicated account. Without it instances have no Google API credentials; the module never falls back to the Compute Engine default SA, which usually holds Editor. |
 | Shielded VM                   | Secure Boot, vTPM and integrity monitoring all on | Secure Boot is **off** unless a `shielded_instance_config` block enables it, even on Shielded-VM-capable images.  |
 | SSH access                    | OS Login (`enable-oslogin = TRUE`) | IAM-governed and centrally revocable, unlike metadata SSH keys.                                                                  |
 | Interactive serial console    | disabled (`serial-port-enable = FALSE`) | The serial console bypasses the guest firewall and OS Login.                                                               |
@@ -36,6 +41,12 @@ The module is opinionated about the settings that are unsafe when left unset:
 
 Boot disks are encrypted at rest by Google-managed keys with no configuration
 required; the module does not currently expose CMEK.
+
+`service_account.email` is required and must be a full address; the API's
+`default` alias is rejected. `scopes` defaults to `["cloud-platform"]`, so
+access is decided by the IAM roles of the service account rather than by OAuth
+scopes. Narrow it only if you also rely on scopes
+as a second limit.
 
 For boot images without UEFI support the API rejects `shielded_instance_config`
 outright — set `shielded_instance_config = null` in that case.
@@ -64,6 +75,7 @@ outright — set `shielded_instance_config = null` in that case.
 | `labels`                   | Labels applied to the instance template.                                                                | `map(string)`  | `{}`                       |    no    |
 | `enable_oslogin`           | Manage SSH access with OS Login rather than metadata SSH keys.                                          | `bool`         | `true`                     |    no    |
 | `enable_serial_port`       | Allow interactive serial console access.                                                                | `bool`         | `false`                    |    no    |
+| `service_account`          | Service account for instances (`email`, `scopes`, default `["cloud-platform"]`). `null` attaches none.   | `object`       | `null`                     |    no    |
 | `shielded_instance_config` | Shielded VM settings (`enable_secure_boot`, `enable_vtpm`, `enable_integrity_monitoring`). `null` omits the block. | `object`       | all `true`         |    no    |
 
 ## Outputs
@@ -73,6 +85,7 @@ outright — set `shielded_instance_config = null` in that case.
 | `id`        | Identifier of the instance template.   |
 | `self_link` | URI of the instance template.          |
 | `name`      | Generated name of the instance template.|
+| `service_account_email` | Email of the attached service account, or null. |
 
 ## Tests
 

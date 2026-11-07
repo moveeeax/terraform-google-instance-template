@@ -14,6 +14,14 @@ provider "google" {
   region  = var.region
 }
 
+# Dedicated identity for the instances. Grant it only the roles the workload
+# needs; the module does not fall back to the Compute Engine default SA.
+resource "google_service_account" "this" {
+  project      = var.project_id
+  account_id   = "example-tpl"
+  display_name = "Example instance template workload"
+}
+
 module "instance_template" {
   source = "../.."
 
@@ -21,6 +29,10 @@ module "instance_template" {
   name_prefix  = "example-tpl-"
   region       = var.region
   machine_type = "e2-small"
+
+  service_account = {
+    email = google_service_account.this.email
+  }
 
   labels = {
     environment = "sandbox"
