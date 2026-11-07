@@ -25,6 +25,48 @@ run "no_service_account_attached_by_default" {
     condition     = length(google_compute_instance_template.this.service_account) == 0
     error_message = "The template must not attach a service account by default; doing so would hand instances the Compute Engine default SA."
   }
+
+  assert {
+    condition     = output.service_account_email == null
+    error_message = "service_account_email must be null when no service account is attached."
+  }
+}
+
+run "service_account_is_attached_with_cloud_platform_scope" {
+  variables {
+    service_account = {
+      email = "web@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_compute_instance_template.this.service_account[0].email == "web@test-project.iam.gserviceaccount.com"
+    error_message = "The supplied service account must be attached to the template."
+  }
+
+  assert {
+    condition     = google_compute_instance_template.this.service_account[0].scopes == toset(["cloud-platform"])
+    error_message = "Scopes must default to cloud-platform so access is governed by the service account's IAM roles."
+  }
+
+  assert {
+    condition     = output.service_account_email == "web@test-project.iam.gserviceaccount.com"
+    error_message = "service_account_email must report the attached service account."
+  }
+}
+
+run "service_account_scopes_can_be_narrowed" {
+  variables {
+    service_account = {
+      email  = "web@test-project.iam.gserviceaccount.com"
+      scopes = ["logging-write", "monitoring-write"]
+    }
+  }
+
+  assert {
+    condition     = google_compute_instance_template.this.service_account[0].scopes == toset(["logging-write", "monitoring-write"])
+    error_message = "Explicit scopes must replace the cloud-platform default."
+  }
 }
 
 run "shielded_vm_hardened_by_default" {
@@ -151,4 +193,30 @@ run "rejects_undersized_boot_disk" {
   }
 
   expect_failures = [var.disk_size_gb]
+}
+
+run "rejects_default_service_account_alias" {
+  # Variable validation fails at plan time, so this run must not attempt an apply.
+  command = plan
+
+  variables {
+    service_account = {
+      email = "default"
+    }
+  }
+
+  expect_failures = [var.service_account]
+}
+
+run "rejects_empty_service_account_email" {
+  # Variable validation fails at plan time, so this run must not attempt an apply.
+  command = plan
+
+  variables {
+    service_account = {
+      email = ""
+    }
+  }
+
+  expect_failures = [var.service_account]
 }

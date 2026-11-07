@@ -100,3 +100,17 @@ variable "shielded_instance_config" {
   })
   default = {}
 }
+
+variable "service_account" {
+  description = "Service account attached to instances created from the template. Null (the default) attaches none, so instances get no Google API credentials. email must be a full service account address; the API's \"default\" alias for the Compute Engine default service account is rejected. scopes defaults to cloud-platform, leaving access control to the service account's IAM roles."
+  type = object({
+    email  = string
+    scopes = optional(list(string), ["cloud-platform"])
+  })
+  default = null
+
+  validation {
+    condition     = var.service_account == null || can(regex("^[^@\\s]+@[^@\\s]+$", var.service_account.email))
+    error_message = "service_account.email must be a full service account email address, e.g. app@my-project.iam.gserviceaccount.com."
+  }
+}

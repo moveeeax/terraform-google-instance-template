@@ -6,6 +6,15 @@ All notable changes to this module are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `service_account` input (`email`, `scopes` defaulting to `["cloud-platform"]`)
+  that attaches a service account to instances built from the template. The
+  default `null` keeps the current behaviour of attaching none. Validation
+  rejects anything that is not a full email address, including the API's
+  `default` alias for the Compute Engine default service account.
+- `service_account_email` output.
+
 ### Changed
 
 - CI: bump actions to their current majors, pin tool versions, and restrict the
